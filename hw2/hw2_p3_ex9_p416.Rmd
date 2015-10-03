@@ -1,0 +1,43 @@
+---
+title: "hw2_p3_ex9_p416"
+author: "Shenglan Qiao"
+date: "October 2, 2015"
+output: html_document
+---
+
+(a)
+
+```{r, echo = FALSE}
+
+hc.complete=hclust(dist(USArrests), method="complete")
+plot(hc.complete,main="Complete Linkage, no scaling", xlab="", sub="",
+cex =.9)
+```
+
+(b) Here are the cluster labels of every state.
+
+```{r, echo=FALSE}
+cluster_assignment <- cutree(hc.complete, 3)
+print(cluster_assignment)
+```
+
+(c) Now let's try hierarchical clustering with scaling.
+```{r, echo=FALSE}
+s_ar=scale(USArrests)
+hc.scaled=hclust(dist(s_ar), method="complete")
+```
+```{r, echo=FALSE}
+plot(hc.scaled,main="Complete Linkage, with scaling", xlab="", sub="",
+cex =.9)
+```
+
+(d) I think we need to scale the data in this case. Below I have printed the scaling factor for each category used to make standard deviation one for each category. 
+```{r, echo=FALSE}
+attr(s_ar,"scaled:scale")
+```
+Notice that the factor is much larger for "Assault" than the other three. This means that "Assault" contributes disproportionally to the Euclidean distances between data points and without scaling it has a larger weight on determining the clustering than the other three categories. The plot below shows that without scaling, cluster assignment correlates strongly with "Assault", which is not the case for other crimes or urban populations.
+```{r, echo=FALSE}
+plot(USArrests[,2], unname(cluster_assignment),main="Without scaling, cluster assignment vs. Assault", xlab="Assault", ylab="Cluster assignment",sub="",
+cex =.9)
+```
+Scaling removes this bias that makes "Assault" a more important factor in clustering. Therefore we should do it.
