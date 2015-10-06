@@ -1,0 +1,145 @@
+---
+title: "hw2_p7_ex15_p125"
+author: "Shenglan Qiao"
+date: "October 5, 2015"
+output: html_document
+---
+(a)
+Examing the regression summaries, I conclude there is one varibale that does not have statistically significant relationships with the response: chas. The model that only uses chas as a predictor has a high p-value of about 0.2. If one visually examine the plot below, it is apparent that with only two different values for chas it is not possible to get a good fit for predicting the crime rate.
+```{r,echo=FALSE}
+library(MASS)
+library(ggplot2)
+sing.coefs<-list()
+sing.coefs.se<-list()
+f.p_val <- list()
+cr <- Boston$crim
+
+for (i in 2:length(names(Boston))){
+    lm.single<-lm(cr~Boston[[i]])
+    
+    f<-summary(lm.single)$fstatistic
+    this_pf <-unname(pf(f[1],f[2],f[3],lower.tail=F))
+    
+    sing.coefs<-append(sing.coefs,list(lm.single$coefficients[[2]]))
+    sing.coefs.se<-append(sing.coefs.se,list(coef(summary(lm.single))[,2][2]))
+    f.p_val<-append(f.p_val,list(this_pf))
+    
+}
+
+lm.chas<-lm(crim~chas,data=Boston)
+print(summary(lm.chas))
+
+plot(Boston$chas,Boston$crim, xlab = 'chas',ylab='crime rate')
+abline(lm.chas,lwd=3,col="red")
+```
+
+For most of the variable, I observe a large spread of crime rates for particular values. This suggests that there are single values for certain variables that tend to associate with large variations in crime rates. If this is true for a certain vairbale, the linear fit for that variable tends to be not so great.
+
+Where this is less varibility in the spread of the crime rate, the fit seems to be better. Variables such as medv and lstat are examples where there isn't one value for which crime rate varies greatly. I think they are therefore better single predictors for crim if we are to use linear regressions.
+
+Code I used to generate the regressions and scatterplots:
+
+```
+library(MASS)
+library(ggplot2)
+sing.coefs<-list()
+sing.coefs.se<-list()
+f.p_val <- list()
+cr <- Boston$crim
+
+for (i in 2:length(names(Boston))){
+    lm.single<-lm(cr~Boston[[i]])
+    print(summary(lm.single))
+    
+    f<-summary(lm.single)$fstatistic
+    this_pf <-unname(pf(f[1],f[2],f[3],lower.tail=F))
+    
+    sing.coefs<-append(sing.coefs,list(lm.single$coefficients[[2]]))
+    sing.coefs.se<-append(sing.coefs.se,list(coef(summary(lm.single))[,2][2]))
+    f.p_val<-append(f.p_val,list(this_pf))
+    
+    plot(Boston[[i]],cr, xlab = names(Boston)[i],ylab='crime rate')
+    abline(lm.single,lwd=3,col="red")
+}
+
+```
+(b)
+From the summary below, we can reject the null hypothesis for dis, rad, medv, black, and zn with 95% confidence or more.
+```{r, echo = FALSE}
+lm.multi <- lm(crim~.,data=Boston)
+print(summary(lm.multi))
+```
+
+It is clear from the residual plot below that there is some non-linear relationship between the predictors and crim. There are also outliers, i.e., data points with large residuals, that are not explained by this model. 
+
+```{r, echo = FALSE}
+plot(lm.multi$fitted.values, lm.multi$residuals,xlab='fitted values for crim',ylab='residuals')
+```
+
+(c)
+
+The plot below compares the single-predicotr coefficients obtained in part a to the multi-predictor coefficients obtained part b. nox, which is significant in the single-predictor model but weekly significant in the multi-predictor model, lies apart from the rest of the coefficients. 
+
+```{r, echo = FALSE}
+options(warn=-1)
+x = unlist(sing.coefs)
+y = unlist(lm.multi$coefficients[2:14])
+nm = unlist(names(Boston)[2:14])
+yse = unlist(coef(summary(lm.multi))[,2][2:14])
+sing.coefs.se = unlist(sing.coefs.se)
+ylimits <- aes(x,ymax = y + yse, ymin=y - yse)
+xlimits <- aes(x,y,xmax=x+sing.coefs.se,xmin=x-sing.coefs.se)
+
+p1<-ggplot()+geom_point(aes(x,y))+geom_text(aes(x,y,label=nm))+labs(x='single regression coefficients',y='multiple regression coefficients')
+print(p1)
+```
+
+The two plots below zooms in to the region where the magnitude of the coefficients are smaller than those of nox. The errorbars indicate plus-minus one standard error for the coefficients. The blue line indicates the two types of cofficients being equal. Pay special attention to the variables dis, rad, medv, black, and zn since they have significant relationships with the reponse in both the multi and single-predictor models.
+
+Given the standard errors, the cofficients for rad are consistent within one standard error for the two types of models. 
+```{r,echo=FALSE}
+p2<-ggplot()+geom_point(aes(x,y))+geom_text(aes(x,y,label=nm))+labs(x='single regression coefficients',y='multiple regression coefficients')+xlim(-3,3)+ylim(-2,2)+geom_abline(intercept=0,slope=1,color='blue')+geom_errorbar(ylimits)+geom_errorbarh(xlimits)
+print(p2)
+```
+
+```{r, echo=FALSE}
+p3<-ggplot()+geom_point(aes(x,y))+geom_text(aes(x,y,label=nm))+labs(x='single regression coefficients',y='multiple regression coefficients')+xlim(-0.5,0.5)+ylim(-0.5,0.5)+geom_abline(intercept=0,slope=1,color='blue')+geom_errorbar(ylimits)+geom_errorbarh(xlimits)
+print(p3)
+```
+
+(d)
+
+To compare the different non-linear models with single predicotrs, I examine the summaries from the regression, the regression lines plotted over the training data, and fitted values vs. residual plots. The code used to produce the plots is copied below.
+
+chas is unsuprisingly not a good single-predictors again, with all three terms in the polynomial not having statistically significant relationship with crime. 
+
+rad, tax, and black are similar to each other. For all three models built with each of these single predictors we fail to reject the null hypothesis that $\beta_j=0$ for $j=1,2,3$. For these three models, the data contains at one point with a much larger spread in the response the the rest. This makes it hard for a single-predictor model to effectively explain all the variations in the training set.
+
+In the regression built with rm and lstat, we also fail to reject the null hypothesis that $\beta_j=0$ for $j=1,2,3$. Both of these models have many outliers; again, this suggests that single predictor models with these two variables are not sufficient to describe the data.
+
+For zn, only the linear term has a statisitcally sinigicant relationship with the response. This model also has one data point with a lot of variation in the response not explained by the model.
+
+For age, on the contrary, the linear term does not have  a statisitcally sinigicant relationship with the response but the quadratic and cubic terms do. This model also has a lot of outliers and data points with unusually large spread in the response. 
+
+For regression with nox, dis, ptraitio, and medv, all the coefficients have sufficiently small p-values for us to reject the null hypothesis. But the fitted values vs. residual plots show varyig degrees of non-linearity not capture by the models.
+
+In short, visual examination shows that none of the predicotrs does a exceptional job at describing the data on its own, even with a non-linear model. I think this is because there are certain data points with much larger vairations in crime rate than the others.
+
+Code for part d:
+```
+for(i in c(2:14)){
+	y = Boston$crim
+	x = Boston[,i]
+	lm.nonli<-lm(y~x+I(x^2)+I(x^3))
+	print(names(Boston)[i])
+	print(summary(lm.nonli))
+	
+	c<-ggplot(Boston,aes(x,y))+geom_point()+geom_smooth(aes(x,lm.nonli$fitted.values),method='loess')+geom_point(aes(x,lm.nonli$fitted.values),color='blue')+labs(x=names(Boston)[i],y='crime rate')
+	
+	print(c)
+	
+	d<-plot(lm.nonli$fitted.values,lm.nonli$residuals)
+	print(d)
+	
+}
+```
