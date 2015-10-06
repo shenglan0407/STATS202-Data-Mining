@@ -1,0 +1,148 @@
+---
+title: "hw2_p6_ex14_p125"
+author: "Shenglan Qiao"
+date: "October 5, 2015"
+output: html_document
+---
+```{r, echo = FALSE}
+library(scatterplot3d) 
+set.seed(1)
+x1=runif(100)
+x2=0.5*x1+rnorm(100)/10
+y=2+2*x1+0.3*x2+rnorm(100)
+```
+
+(a) 
+
+Since x2 is actually a function of x1, the true linear model that describes y is
+$$y = 2+2.15x_1+\epsilon$$
+where $\epsilon$ can be described by a normal distribution centered at zero with a standard deviation of 1.03.
+
+(b) 
+
+The correlation between x1 and x2 is 0.84, which is close to one. The scatter plot below shows that with some noise x2 scales linearly with respect to x1.
+
+```{r, echo=FALSE}
+plot(x1,x2,xlab='x1',ylab='x2')
+```
+
+(c) 
+
+The summary the summary of the linear regression below shows the values for $\beta_0$, $\beta_1$, and $\beta_2$. The values for the intercept and $\beta_1$ are actually within one standard error of their respective true values of 2 and 2.15.
+
+```{r,echo = FALSE}
+lm.coli_c<-lm(y~x1+x2)
+summary(lm.coli_c)
+
+s3d <-scatterplot3d(x1,x2,y, pch=16, highlight.3d=TRUE,
+  type="h", main="3D Scatterplot",angle=50)
+s3d$plane3d(lm.coli_c)
+```
+
+From the summary, one can see that the p-value is small enough for the null hypothesis $H_0:\beta_1=0$ such that we can reject it. But the same cannot be said for null hypothesis $H_0:\beta_2=0$; we cannot reject it given the p-value of 0.38. 
+
+(d) 
+
+For this fit, the values of $\beta_0$ and $\beta_1$ are closer to their true values. This is a better fit compared to the previous one in part c since the F-statistic is larger and its associated p-value small. This is not surprising since this regression is true to the underlining relationship of the data.
+
+We can reject the null hypthesis $H_0:\beta_1=0$ since the p-value associated with is pratically zero.
+
+```{r,echo = FALSE}
+lm.coli_d<-lm(y~x1)
+summary(lm.coli_d)
+
+plot(x1,y,xlab='x1',ylab='y')
+abline(lm.coli_d,lwd=3,col="red")
+```
+
+(e)
+
+Compared to the fit in part d, this regression has a smaller F-statistic. This makes sense since x2 has a normally distributed random noise associated with it. Although there is a strong correlation between x2 and x1, x2 can be considered a noisier version of x1 and therefore not as good a predicotr of y as x1. This model seems to be better than the model with both x1 and x2 as predictors since it gets rid of colinearity between the variables.
+
+In this case, we can also reject the null hypthesis $H_0:\beta_1=0$ since the p-value associated with is very small.
+
+```{r,echo = FALSE}
+lm.coli_e<-lm(y~x2)
+summary(lm.coli_e)
+
+plot(x2,y,xlab='x2',ylab='y')
+abline(lm.coli_e,lwd=3,col="red")
+```
+
+(f) 
+
+I don't think the results in parts c-e contradict each other. As expected, part d gives the best model as it is the "truest" to the underlying relationship in the data. The result in part e is comparatively worse since x2 is just a noisier version of x1. Part c gives the worst model because data because x1 and x2 are correlated. Since collinearity reduces the accuracy of the estimates of the regression coefficients, it causes the standard error for $β_2$ to grow. Consequently, collinearity results in a decline in the t-statistic and we fail to reject the null hypthesis.
+
+(g)
+
+```{r,echo=FALSE}
+x1=c(x1, 0.1)
+x2=c(x2, 0.8)
+y=c(y,6)
+```
+
+Let's look at what the new addition to the data does to each model.
+
+First the model with x1 and x2 as predictors. From the 3d scatterplot, one can see that the 101th data point is clearly an outlier. This point also has very unsually (x1,x2) values, i.e. high leverage.
+
+```{r,echo = FALSE}
+
+lm.coli_c2<-lm(y~x1+x2)
+
+lev<-hatvalues(lm.coli_c2)
+res<-lm.coli_c2$residuals
+y_fit<-lm.coli_c2$fitted.values
+
+s3d <-scatterplot3d(x1,x2,y, pch=16, highlight.3d=TRUE,
+  type="h", main="3D Scatterplot",angle=50)
+s3d.coords <- s3d$xyz.convert(x1,x2,y)
+text(s3d.coords$x[[101]],s3d.coords$y[[101]],labels ='101',cex=.5, pos=4)
+s3d$plane3d(lm.coli_c2)
+
+
+plot(lev,res,xlab='leverage',ylab='residuals')
+text(lev[[101]],res[[101]],label ='101',cex=.5, pos=4)
+
+summary(lm.coli_c2)
+
+```
+
+In ths regression, we actually see that there is no statistically significant relationship between x1 and y. It seems that x2 is so abnormally large that this data point has made it look like x2 is a more important variable than x1.
+
+In the model where x1 is the only variable, the regression result is very similar to before. y = 6 may be on the higher end of the range of y in the data set. But x1 = 0.1 is well within the distribution of x1 in the data (not a high leverage point). Overall, adding this data point does not change this particular regression
+
+```{r,echo = FALSE}
+lm.coli_d2<-lm(y~x1)
+
+lev<-hatvalues(lm.coli_d2)
+res<-lm.coli_d2$residuals
+y_fit<-lm.coli_d2$fitted.values
+plot(lev,res,xlab='leverage',ylab='residuals')
+text(lev[[101]],res[[101]],label ='101',cex=.5, pos=4)
+
+plot(x1,y,xlab='x1',ylab='y')
+abline(lm.coli_d2,lwd=3,col="red")
+text(x1[[101]],y[[101]],label ='101',cex=.5, pos=4)
+
+summary(lm.coli_d2)
+```
+
+In the third case, x2 = 0.8 is definitely a high leverage point. However given the true model underlying the data, y = 6 is not an outlier given x2 = 0.8. In other words, comapring the scatterplot and the regression line below seems to show that data point 101 does not seem unreasonable. Therefore, this regression ends up with a higher F-statistic than the other two.
+```{r,echo = FALSE}
+lm.coli_e2<-lm(y~x2)
+
+lev<-hatvalues(lm.coli_e2)
+res<-lm.coli_e2$residuals
+y_fit<-lm.coli_e2$fitted.values
+plot(lev,res,xlab='leverage',ylab='residuals')
+text(lev[[101]],res[[101]],label ='101',cex=.5, pos=4)
+
+plot(x2,y,xlab='x2',ylab='y')
+abline(lm.coli_e2,lwd=3,col="red")
+text(x2[[101]],y[[101]],label ='101',cex=.5, pos=4)
+
+summary(lm.coli_e2)
+```
+
+
+
