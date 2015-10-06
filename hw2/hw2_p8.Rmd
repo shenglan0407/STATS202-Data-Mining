@@ -1,0 +1,60 @@
+---
+title: "hw2_p8"
+author: "Shenglan Qiao"
+date: "October 6, 2015"
+output: html_document
+---
+
+1. Loading and organizing data...
+
+```{r, echo=FALSE}
+library(utils)
+data<-read.csv('/Users/shenglanqiao/Documents/Classes/Stats 202/training_features.csv')
+data <- as.data.frame(lapply(data, function(x) {x[is.na(x)] <- median(x, na.rm=TRUE); x}))
+data2 <- data[data$subject.id!=525450,]
+data3 <- data2[,c("q1_speech.slope", "q2_salivation.slope", "q3_swallowing.slope", "q4_handwriting.slope", "q5a_cutting_without_gastrostomy.slope", "q6_dressing_and_hygiene.slope", "q7_turning_in_bed.slope", "q8_walking.slope", "q9_climbing_stairs.slope")]
+
+pca1 <- prcomp(data3,scale=TRUE)
+```
+
+2.
+The top two components capture (20+14)%=34% of the variance. That is less than 50%.
+
+```{r, echo=FALSE}
+pca1.var=pca1$sdev^2
+pve1=pca1.var/sum(pca1.var)
+print(pve1)
+
+plot(cumsum(pve1), xlab="Principal Component ", ylab=" Cumulative Proportion of Variance Explained ", ylim=c(0,1), type="b")
+```
+
+3.
+This biplot sparates the 9 variables roughly into two cluster: q9, q7, q8, and q6 in one that corresponds to positive loadings PC1 and PC2 and the other variable in the other cluster that corresponds to positive loadings for PC1 but negative loadings for PC2. The grouping makes intuitive sense. q9, q7, q8, and q6 describes motions such as climbing stairs, turning in bed, dressing and cleaning oneself, and walking. These are motions that require moving of multiple body parts, moving of the entire body, and larger movements. The other group include handwriting, cutting, speech, salvation, and swallowing, which are movements that involve fewer body parts (hands and mouth) and also do not require moving of the entire body. One can imagine that these two group of the movements are affected differently by the progression of ALS.
+
+```{r,echo=FALSE}
+biplot(pca1, scale=0,cex=0.5)
+```
+
+4.
+One can see from the biplot below that the added point (number 1273) has a very large loading for PC1 and a very negative loading for PC2. Its presence completely changes the group of variables.
+
+```{r,echo=FALSE}
+
+data4 <- data[,c("q1_speech.slope", "q2_salivation.slope", "q3_swallowing.slope", "q4_handwriting.slope", "q5a_cutting_without_gastrostomy.slope", "q6_dressing_and_hygiene.slope", "q7_turning_in_bed.slope", "q8_walking.slope", "q9_climbing_stairs.slope")]
+
+pca2 <- prcomp(data4,scale=TRUE)
+biplot(pca2, scale=0,cex=0.5)
+```
+
+If we zoom in (below), we can get a better sense of the grouping. It now seems that q1, q8, and q9 are in a cluster, roughly indicating positive loading for PC1. q3 roughly corresponds to positive loading for PC2. The rest of the variables are in between.
+
+```{r, echo=FALSE}
+biplot(pca2, scale=0,cex=0.5, xlim = c(-5,15),ylim=c(-5,15))
+```
+
+When we examine the values in data point 1273 and the summary for the entire data set, we see that this data point accounts for the maximum values in q1, q4, q8, and q9, and the minimum in q3. This data point is definitely an outlier. It's not surprising that when it is included in the PCA, the first two principal components are biased towards the variables whose variances are greatly increased by its presence. 
+
+```{r, echo=FALSE}
+data4[1273,]
+summary(data4)
+```
