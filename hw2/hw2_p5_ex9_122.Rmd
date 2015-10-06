@@ -1,0 +1,83 @@
+---
+title: "hw2_p5_ex9_p122"
+author: "Shenglan Qiao"
+date: "October 4, 2015"
+output: html_document
+---
+
+(a) Here is the scatterplot matrix:
+
+```{r,echo=FALSE}
+library(ISLR)
+pairs(Auto)
+```
+
+(b) Here is the correlation matrix:
+
+```{r, echo=FALSE}
+ cor(Auto[,1:8])
+```
+
+(c) Here is a summary for a linear regression with mpg as the response and all the other varibales as predictors except name. Origin is a categorical predictor and the baseline is origin = 1.
+```{r, echo=FALSE}
+Auto$origin<-as.factor(Auto$origin)
+lm.mpg = lm(mpg~.-name,data=Auto)
+summary(lm.mpg)
+```
+
+i. F-statistics is much greater than 1 and its p-value is very small. Therefore there is a relationship between at least one of the predictors and the response.
+
+ii. Displacement, weight, year, and origin have statistically significant relationship to the response.
+
+iii. The coefficient for year is about 0.78. This means that mpg an average improves about 0.78 mile per gallon per year.
+
+(d) First, we can examine the fitted value vs. residual plot below. 
+```{r,echo=FALSE}
+RSE<-summary(lm.mpg)$sigma
+
+plot(lm.mpg$fitted.values,lm.mpg$residuals,xlab='fitted mpg',ylab='residuals')
+
+abline(h=0)
+abline(h=-RSE)
+abline(h=RSE)
+for (i in 1:length(lm.mpg$fitted.values)) {
+    if (abs(lm.mpg$residuals[[i]])>RSE*3){
+        text(lm.mpg$fitted.values[[i]],lm.mpg$residuals[[i]],labels=names(lm.mpg$residuals)[i])
+    }
+}
+```
+
+One can see that there is some nonlinearity that is not captured by the linear regression. The model tends to over estimate mpg at small or large values and tends to underestimate in the middle.
+The three horizontal lines indicate residual = 0 and plus-minus one sigma (RSE). Data points more than three sigmas away from zero are labeled by their observation numbers. These are large outliers that have large residuals not explained by the linear regression model.
+
+Below is the leverage vs residual plot.Again, the three horizontal lines indicate residual = 0 and plus-minus one sigma (RSE).
+```{r, echo = FALSE}
+plot(hatvalues(lm.mpg),lm.mpg$residuals,xlab='leverage',ylab='residuals')
+abline(h=0)
+abline(h=-RSE)
+abline(h=RSE)
+
+max_lev<-which.max(hatvalues(lm.mpg))[[1]]
+max_lev_name<-names(which.max(hatvalues(lm.mpg)))
+text(hatvalues(lm.mpg)[[max_lev]],lm.mpg$residuals[[max_lev]],label=max_lev_name)
+
+max_RES<-which.max(lm.mpg$residuals)[[1]]
+max_RES_name<-names(which.max(lm.mpg$residuals))
+text(hatvalues(lm.mpg)[[max_RES]],lm.mpg$residuals[[max_RES]],label=max_RES_name)
+
+
+
+
+sd_lev<-sd(hatvalues(lm.mpg))
+
+for (i in 1:length(lm.mpg$residuals)) {
+    if (abs(lm.mpg$residuals[[i]])>RSE*2 & hatvalues(lm.mpg)[[i]]>3*sd_lev){
+        text(hatvalues(lm.mpg)[[i]],lm.mpg$residuals[[i]],labels=names(lm.mpg$residuals)[i])
+    }
+}
+
+```
+
+Observation 14 has very high leverage while observation 323 has the highest residual. It's good that they are at least not the same point. Observation number 304 may be perticularly problematic since is has a fairly high residual and leverage as well.
+
+By examining the scatter plot matrix and the correlation matrix produced in parts a and b, we can also see that cylinder is highly correlated with displacement, horsepower, and weight. Therefore, not all of these variables should be included as predictors for mpg. Indeed, seeing that horsepower and cylinders do not have statistically significant relationship to mpg, the model will probably be better with those two variables removed.
